@@ -27,6 +27,8 @@ from motion_imitation.robots import robot_config
 from motion_imitation.envs.sensors import sensor
 from motion_imitation.envs.sensors import space_utils
 
+from motion_imitation.robots import bittle
+
 _ACTION_EPS = 0.01
 _NUM_SIMULATION_ITERATION_STEPS = 300
 _LOG_BUFFER_LENGTH = 5000
@@ -64,7 +66,6 @@ class LocomotionGymEnv(gym.Env):
       ValueError: If the num_action_repeat is less than 1.
 
     """
-
     self.seed()
     self._gym_config = gym_config
     self._robot_class = robot_class
@@ -120,14 +121,15 @@ class LocomotionGymEnv(gym.Env):
 
     # The action list contains the name of all actions.
     self._build_action_space()
-
     # Set the default render options.
-    self._camera_dist = gym_config.simulation_parameters.camera_distance
+    if robot_class == bittle.Bittle:
+      self._camera_dist = gym_config.simulation_parameters.camera_distance*3
+    else:
+      self._camera_dist = gym_config.simulation_parameters.camera_distance
     self._camera_yaw = gym_config.simulation_parameters.camera_yaw
     self._camera_pitch = gym_config.simulation_parameters.camera_pitch
     self._render_width = gym_config.simulation_parameters.render_width
     self._render_height = gym_config.simulation_parameters.render_height
-
     self._hard_reset = True
     self.reset()
 
@@ -265,6 +267,7 @@ class LocomotionGymEnv(gym.Env):
 
     for s in self.all_sensors():
       s.on_reset(self)
+
 
     if self._task and hasattr(self._task, 'reset'):
       self._task.reset(self)

@@ -30,6 +30,8 @@ import time
 from motion_imitation.envs import env_builder as env_builder
 from motion_imitation.learning import imitation_policies as imitation_policies
 from motion_imitation.learning import ppo_imitation as ppo_imitation
+from motion_imitation.robots import bittle
+from motion_imitation.robots import laikago
 
 from stable_baselines.common.callbacks import CheckpointCallback
 
@@ -82,7 +84,7 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
   if (output_dir == ""):
     save_path = None
   else:
-    save_path = os.path.join(output_dir, "model.zip")
+    save_path = os.path.join(output_dir, "model2.zip")
     if not os.path.exists(output_dir):
       os.makedirs(output_dir)
   
@@ -93,7 +95,7 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
     if (int_save_freq > 0):
       int_dir = os.path.join(output_dir, "intermedate")
       callbacks.append(CheckpointCallback(save_freq=int_save_freq, save_path=int_dir,
-                                          name_prefix='model'))
+                                          name_prefix='model2'))
 
   model.learn(total_timesteps=total_timesteps, save_path=save_path, callback=callbacks)
 
@@ -142,19 +144,29 @@ def main():
   arg_parser.add_argument("--model_file", dest="model_file", type=str, default="")
   arg_parser.add_argument("--total_timesteps", dest="total_timesteps", type=int, default=2e8)
   arg_parser.add_argument("--int_save_freq", dest="int_save_freq", type=int, default=0) # save intermediate model every n policy steps
+  arg_parser.add_argument("--robot", dest="specified_robot", type=str, default="laikago")
 
   args = arg_parser.parse_args()
   
   num_procs = MPI.COMM_WORLD.Get_size()
   os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
-  
+
+  if args.specified_robot == "bittle":
+    robot_class = bittle.Bittle
+    robot = bittle
+  else:
+    robot_class = laikago.Laikago
+    robot = laikago
+
+  #Create env and pass in bittle as robot and robot class
   enable_env_rand = ENABLE_ENV_RANDOMIZER and (args.mode != "test")
   env = env_builder.build_imitation_env(motion_files=[args.motion_file],
                                         num_parallel_envs=num_procs,
                                         mode=args.mode,
                                         enable_randomizer=enable_env_rand,
-                                        enable_rendering=args.visualize)
-  
+                                        enable_rendering=args.visualize,
+                                        robot_class=robot_class, 
+                                        robot=robot)
   model = build_model(env=env,
                       num_procs=num_procs,
                       timesteps_per_actorbatch=TIMESTEPS_PER_ACTORBATCH,
@@ -164,7 +176,7 @@ def main():
   
   if args.model_file != "":
     model.load_parameters(args.model_file)
-
+ 
   if args.mode == "train":
       train(model=model, 
             env=env, 

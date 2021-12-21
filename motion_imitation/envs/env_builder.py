@@ -15,6 +15,7 @@
 
 import os
 import inspect
+import time
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(os.path.dirname(currentdir))
@@ -37,9 +38,8 @@ from motion_imitation.envs.sensors import robot_sensors
 from motion_imitation.envs.utilities import controllable_env_randomizer_from_config
 from motion_imitation.robots import laikago
 from motion_imitation.robots import a1
+from motion_imitation.robots import bittle
 from motion_imitation.robots import robot_config
-
-
 
 
 
@@ -79,8 +79,24 @@ def build_laikago_env( motor_control_mode, enable_rendering):
 def build_imitation_env(motion_files, num_parallel_envs, mode,
                         enable_randomizer, enable_rendering,
                         robot_class=laikago.Laikago,
+                        robot=laikago,
                         trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=laikago.UPPER_BOUND)):
+
+  #CHANGE trajectory_generator
+  #CHANGE bittle.py
+  #CHANGE robot_config.py
+  #CHANGE robot_pose_utils.py
+  #CHANGE minitaur.py
+  #CHANGE minitaur_constants.py
+  #CHANGE minitaur_pose_utils.py
+  #CHANGE retarget_motion
+  #CHANGE retarget_motion and .txt file
+  #CHANGE output directory or file name, how does training read the directory?
+
   assert len(motion_files) > 0
+
+  if robot_class == bittle.Bittle:
+    trajectory_generator=simple_openloop.BittlePoseOffsetGenerator(action_limit=bittle.UPPER_BOUND)
 
   curriculum_episode_length_start = 20
   curriculum_episode_length_end = 600
@@ -91,27 +107,33 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
   sim_params.motor_control_mode = robot_config.MotorControlMode.POSITION
 
   gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params)
+  #Everything up to here is robot generic I think
 
+  #dynamic num motors
   sensors = [
-      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.MotorAngleSensor(num_motors=laikago.NUM_MOTORS), num_history=3),
+      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.MotorAngleSensor(num_motors=robot.NUM_MOTORS), num_history=3),
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.IMUSensor(), num_history=3),
-      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=environment_sensors.LastActionSensor(num_actions=laikago.NUM_MOTORS), num_history=3)
+      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=environment_sensors.LastActionSensor(num_actions=robot.NUM_MOTORS), num_history=3)
   ]
 
+  #I think this is robot generic maybe change motion files
   task = imitation_task.ImitationTask(ref_motion_filenames=motion_files,
                                       enable_cycle_sync=True,
                                       tar_frame_steps=[1, 2, 10, 30],
                                       ref_state_init_prob=0.9,
                                       warmup_time=0.25)
 
+  #Keep the same for now i think
   randomizers = []
   if enable_randomizer:
     randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
     randomizers.append(randomizer)
 
+  #Here start making changes , passing in robot_class
   env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config, robot_class=robot_class,
                                             env_randomizers=randomizers, robot_sensors=sensors, task=task)
 
+  #CHANGE trajectory_generator
   env = observation_dictionary_to_array_wrapper.ObservationDictionaryToArrayWrapper(env)
   env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(env,
                                                                        trajectory_generator=trajectory_generator)
@@ -119,6 +141,7 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
   if mode == "test":
       curriculum_episode_length_start = curriculum_episode_length_end
 
+  #generic i think
   env = imitation_wrapper_env.ImitationWrapperEnv(env,
                                                   episode_length_start=curriculum_episode_length_start,
                                                   episode_length_end=curriculum_episode_length_end,

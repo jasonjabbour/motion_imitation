@@ -15,17 +15,18 @@ import pybullet as p  # pytype: disable=import-error
 from motion_imitation.envs import env_builder
 from motion_imitation.robots import a1
 from motion_imitation.robots import laikago
+from motion_imitation.robots import bittle
 from motion_imitation.robots import robot_config
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum('robot_type', 'A1', ['A1', 'Laikago'], 'Robot Type.')
+flags.DEFINE_enum('robot_type', 'A1', ['A1', 'Laikago', 'bittle'],'Robot Type.')
 flags.DEFINE_enum('motor_control_mode', 'Torque',
                   ['Torque', 'Position', 'Hybrid'], 'Motor Control Mode.')
 flags.DEFINE_bool('on_rack', False, 'Whether to put the robot on rack.')
 flags.DEFINE_string('video_dir', None,
                     'Where to save video (or None for not saving).')
 
-ROBOT_CLASS_MAP = {'A1': a1.A1, 'Laikago': laikago.Laikago}
+ROBOT_CLASS_MAP = {'A1': a1.A1, 'Laikago': laikago.Laikago, 'bittle': bittle.Bittle}
 
 MOTOR_CONTROL_MODE_MAP = {
     'Torque': robot_config.MotorControlMode.TORQUE,
@@ -57,7 +58,7 @@ def main(_):
   if FLAGS.video_dir:
     log_id = p.startStateLogging(p.STATE_LOGGING_VIDEO_MP4, FLAGS.video_dir)
 
-  for _ in tqdm(range(800)):
+  for _ in tqdm(range(8000)):
     action = np.zeros(dim_action)
     for dim in range(dim_action):
       action[dim] = env.pybullet_client.readUserDebugParameter(

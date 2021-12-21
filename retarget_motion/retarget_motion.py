@@ -21,9 +21,10 @@ import pybullet
 import pybullet_data as pd
 from motion_imitation.utilities import motion_util
 
-# import retarget_config_a1 as config
-import retarget_config_laikago as config
-# import retarget_config_vision60 as config
+#import retarget_config_a1 as config
+#import retarget_config_laikago as config
+#import retarget_config_vision60 as config
+import retarget_config_bittle as config
 
 POS_SIZE = 3
 ROT_SIZE = 4
@@ -337,19 +338,22 @@ def main(argv):
       pybullet.setGravity(0, 0, 0)
     
       ground = pybullet.loadURDF(GROUND_URDF_FILENAME)
+      #Load actual robot using initial position and rotation
       robot = pybullet.loadURDF(config.URDF_FILENAME, config.INIT_POS, config.INIT_ROT)
       # Set robot to default pose to bias knees in the right direction.
       set_pose(robot, np.concatenate([config.INIT_POS, config.INIT_ROT, config.DEFAULT_JOINT_POSE]))
 
       p.removeAllUserDebugItems()
       print("mocap_name=", mocap_motion[0])
+      #Get positions of markers from mocap file 
       joint_pos_data = load_ref_data(mocap_motion[1],mocap_motion[2],mocap_motion[3])
     
       num_markers = joint_pos_data.shape[-1] // POS_SIZE
+      #Draw the markers of the motion data
       marker_ids = build_markers(num_markers)
     
       retarget_frames = retarget_motion(robot, joint_pos_data)
-      output_motion(retarget_frames, f"{mocap_motion[0]}.txt")
+      output_motion(retarget_frames, f"{mocap_motion[0]+'_bittle'}.txt")
     
       f = 0
       num_frames = joint_pos_data.shape[0]
