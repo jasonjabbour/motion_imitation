@@ -82,17 +82,6 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
                         robot=laikago,
                         trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=laikago.UPPER_BOUND)):
 
-  #CHANGE trajectory_generator
-  #CHANGE bittle.py
-  #CHANGE robot_config.py
-  #CHANGE robot_pose_utils.py
-  #CHANGE minitaur.py
-  #CHANGE minitaur_constants.py
-  #CHANGE minitaur_pose_utils.py
-  #CHANGE retarget_motion
-  #CHANGE retarget_motion and .txt file
-  #CHANGE output directory or file name, how does training read the directory?
-
   assert len(motion_files) > 0
 
   if robot_class == bittle.Bittle:

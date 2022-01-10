@@ -1,0 +1,17 @@
+Commands to Run 
+---------------
+
+Train Laikogo:
+python motion_imitation/run.py --mode train --motion_file motion_imitation/data/motions/dog_pace.txt --int_save_freq 1000000 --total_timesteps 10000000 --visualize
+
+Bittle train:
+python motion_imitation/run.py --mode train --motion_file motion_imitation/data/motions/pace_bittle.txt --int_save_freq 1000000 --robot bittle --total_timesteps 10000000 --visualize
+
+Bittle train on parallel cores:
+mpiexec -n 8 python motion_imitation/run.py --mode train --motion_file motion_imitation/data/motions/pace_bittle.txt --int_save_freq 1000000 --robot bittle --total_timesteps 10000000
+
+Bittle test:
+python motion_imitation/run.py --mode test --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/model2.zip --visualize --robot bittle
+
+Bittle test (no visual):
+python motion_imitation/run.py --mode test --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/model2.zip --robot bittle

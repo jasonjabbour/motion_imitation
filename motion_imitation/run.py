@@ -35,6 +35,9 @@ from motion_imitation.robots import laikago
 
 from stable_baselines.common.callbacks import CheckpointCallback
 
+from serialMaster.policy2serial import *
+
+
 TIMESTEPS_PER_ACTORBATCH = 4096
 OPTIM_BATCHSIZE = 256
 
@@ -132,6 +135,58 @@ def test(model, env, num_procs, num_episodes=None):
       print("Episode Count: " + str(episode_count))
 
   return
+
+
+# def test(model, env, num_procs, num_episodes=None):
+#   curr_return = 0
+#   sum_return = 0
+#   episode_count = 0
+
+#   if num_episodes is not None:
+#     num_local_episodes = int(np.ceil(float(num_episodes) / num_procs))
+#   else:
+#     num_local_episodes = np.inf
+
+#   initializeCommands()
+#   time.sleep(5)
+#   timecount = 0 
+#   o = env.reset()
+#   while episode_count < num_local_episodes:
+#     a, _ = model.predict(o, deterministic=True)
+#     #call to change motor angles of bittle
+#     print("here",timecount)
+#     timecount+=1
+#     step_real_bittle(ser, a)
+#     o, r, done, info = env.step(a)
+#     #get last 3 angle positions, imu readings, and last 3 actions specified taken
+#     curr_return += r
+
+#     if done:
+#         o = env.reset()
+#         sum_return += curr_return
+#         episode_count += 1
+
+#   sum_return = MPI.COMM_WORLD.allreduce(sum_return, MPI.SUM)
+#   episode_count = MPI.COMM_WORLD.allreduce(episode_count, MPI.SUM)
+
+#   mean_return = sum_return / episode_count
+
+#   if MPI.COMM_WORLD.Get_rank() == 0:
+#       print("Mean Return: " + str(mean_return))
+#       print("Episode Count: " + str(episode_count))
+
+#   return
+
+def step_real_bittle(ser, action):
+  # given action step the real life bittle
+
+  #joints_key = ['9','13','8','12','10','14','11','15']
+  #change actions to degrees
+  action = np.degrees(action)
+  task = ['i',[9,-action[0],13,-action[1],8,-action[2],12, -action[3], 10, -action[4],14,-action[5],11,-action[6],15,-action[7]],0.0167]
+  sendCommand(task)
+  time.sleep(.0333)
+
 
 def main():
   arg_parser = argparse.ArgumentParser()
