@@ -338,7 +338,8 @@ class LocomotionGymEnv(gym.Env):
       env_randomizer.randomize_step(self)
 
     # robot class and put the logics here.
-    self._robot.Step(action)
+    #return the calculated processed action
+    proc_action = self._robot.Step(action)
 
     for s in self.all_sensors():
       s.on_step(self)
@@ -352,7 +353,7 @@ class LocomotionGymEnv(gym.Env):
     self._env_step_counter += 1
     if done:
       self._robot.Terminate()
-    return self._get_observation(), reward, done, {}
+    return self._get_observation(), reward, done, {"processed_action":proc_action}
 
   def render(self, mode='rgb_array'):
     if mode != 'rgb_array':

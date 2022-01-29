@@ -68,7 +68,7 @@ class ImitationWrapperEnv(object):
       ValueError if input action is None.
 
     """
-    original_observation, reward, done, _ = self._gym_env.step(action)
+    original_observation, reward, done, original_info = self._gym_env.step(action)
     observation = self._modify_observation(original_observation)
     terminated = done
 
@@ -77,7 +77,7 @@ class ImitationWrapperEnv(object):
     if not done:
       self._total_step_count += 1
 
-    info = {"terminated": terminated}
+    info = {"terminated": terminated, "processed_action": original_info['processed_action']}
 
     return observation, reward, done, info
 

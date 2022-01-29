@@ -85,52 +85,60 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
   assert len(motion_files) > 0
 
   if robot_class == bittle.Bittle:
+    #get_action() returns initial pose of .52 + action
     trajectory_generator=simple_openloop.BittlePoseOffsetGenerator(action_limit=bittle.UPPER_BOUND)
 
   curriculum_episode_length_start = 20
   curriculum_episode_length_end = 600
   
+  #Set Simulation Parameters
   sim_params = locomotion_gym_config.SimulationParameters()
   sim_params.enable_rendering = enable_rendering
   sim_params.allow_knee_contact = True
   sim_params.motor_control_mode = robot_config.MotorControlMode.POSITION
+  #make changes parameters to simulation here if you would like:
+  #sim_params.sim_time_step_s = .07
 
+  #Group the simulation parameters into the gym_config class
   gym_config = locomotion_gym_config.LocomotionGymConfig(simulation_parameters=sim_params)
-  #Everything up to here is robot generic I think
 
-  #dynamic num motors
+  #Use the sensors of the robot
   sensors = [
+      # reads motor angles from robot minutaur class: GetMotorAngles(). Applies STD for noise. History of last 3 angles thus 3*8 = 24
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.MotorAngleSensor(num_motors=robot.NUM_MOTORS), num_history=3),
+      # [Roll, Pitch, Roll Rate, Pitch Rate] * 3 = 12
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.IMUSensor(), num_history=3),
+      # Position of the motors with a bitterworth filter applied. [8]*3 = 24
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=environment_sensors.LastActionSensor(num_actions=robot.NUM_MOTORS), num_history=3)
   ]
 
-  #I think this is robot generic maybe change motion files
+  #Calculates reward base on the difference of pose (angle of each joint), velocity (velocity of each joint), end effector (base position and base rotation), root pose, and root velocity of sim bittle and reference motion bittle
   task = imitation_task.ImitationTask(ref_motion_filenames=motion_files,
                                       enable_cycle_sync=True,
                                       tar_frame_steps=[1, 2, 10, 30],
                                       ref_state_init_prob=0.9,
                                       warmup_time=0.25)
 
-  #Keep the same for now i think
+  #Domain Randomization
   randomizers = []
   if enable_randomizer:
     randomizer = controllable_env_randomizer_from_config.ControllableEnvRandomizerFromConfig(verbose=False)
     randomizers.append(randomizer)
 
-  #Here start making changes , passing in robot_class
+  #Initialize Open AI Gym Environment
   env = locomotion_gym_env.LocomotionGymEnv(gym_config=gym_config, robot_class=robot_class,
                                             env_randomizers=randomizers, robot_sensors=sensors, task=task)
 
-  #CHANGE trajectory_generator
+  #Flattens observations of individual sensors into 1 array of length 60
   env = observation_dictionary_to_array_wrapper.ObservationDictionaryToArrayWrapper(env)
+  #Flattens the target observations
   env = trajectory_generator_wrapper_env.TrajectoryGeneratorWrapperEnv(env,
                                                                        trajectory_generator=trajectory_generator)
 
   if mode == "test":
       curriculum_episode_length_start = curriculum_episode_length_end
 
-  #generic i think
+  #Modifies observational space. Adds the 60 target observations
   env = imitation_wrapper_env.ImitationWrapperEnv(env,
                                                   episode_length_start=curriculum_episode_length_start,
                                                   episode_length_end=curriculum_episode_length_end,

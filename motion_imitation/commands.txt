@@ -15,3 +15,9 @@ python motion_imitation/run.py --mode test --motion_file motion_imitation/data/m
 
 Bittle test (no visual):
 python motion_imitation/run.py --mode test --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/model2.zip --robot bittle
+
+Bittle Load and Convert Model:
+python motion_imitation/run.py --mode convert --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/model2.zip --robot bittle
+
+Bittle Sim2Real Test
+python motion_imitation/run.py --mode sim2real --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/model2.zip --robot bittle

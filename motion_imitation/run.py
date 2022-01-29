@@ -87,7 +87,7 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
   if (output_dir == ""):
     save_path = None
   else:
-    save_path = os.path.join(output_dir, "model2.zip")
+    save_path = os.path.join(output_dir, "model3.zip")
     if not os.path.exists(output_dir):
       os.makedirs(output_dir)
   
@@ -137,56 +137,68 @@ def test(model, env, num_procs, num_episodes=None):
   return
 
 
-# def test(model, env, num_procs, num_episodes=None):
-#   curr_return = 0
-#   sum_return = 0
-#   episode_count = 0
+def test_sim2real(model, env, num_procs, num_episodes=None):
+  ''' Test policy on the real-life bittle '''
+  curr_return = 0
+  sum_return = 0
+  episode_count = 0
 
-#   if num_episodes is not None:
-#     num_local_episodes = int(np.ceil(float(num_episodes) / num_procs))
-#   else:
-#     num_local_episodes = np.inf
+  if num_episodes is not None:
+    num_local_episodes = int(np.ceil(float(num_episodes) / num_procs))
+  else:
+    num_local_episodes = np.inf
 
-#   initializeCommands()
-#   time.sleep(5)
-#   timecount = 0 
-#   o = env.reset()
-#   while episode_count < num_local_episodes:
-#     a, _ = model.predict(o, deterministic=True)
-#     #call to change motor angles of bittle
-#     print("here",timecount)
-#     timecount+=1
-#     step_real_bittle(ser, a)
-#     o, r, done, info = env.step(a)
-#     #get last 3 angle positions, imu readings, and last 3 actions specified taken
-#     curr_return += r
+  initializeCommands()
+  #time.sleep(5)
+  o = env.reset()
+  while episode_count < num_local_episodes:
+    a, _ = model.predict(o, deterministic=True)
 
-#     if done:
-#         o = env.reset()
-#         sum_return += curr_return
-#         episode_count += 1
+    #step the simulation
+    o, r, done, info = env.step(a)
+    #get the processed action calculated during simulation
+    proc_action = info['processed_action']
 
-#   sum_return = MPI.COMM_WORLD.allreduce(sum_return, MPI.SUM)
-#   episode_count = MPI.COMM_WORLD.allreduce(episode_count, MPI.SUM)
+    #call to change motor angles of bittle
+    step_real_bittle(ser, proc_action)
+    #get imu data
+    imu_sensor = np.array(getBittleSensorInfo())
+    # print(imu_sensor)
+    o = np.concatenate((imu_sensor, o[12:]))
+   
+    time.sleep(.006)
 
-#   mean_return = sum_return / episode_count
+    curr_return += r
 
-#   if MPI.COMM_WORLD.Get_rank() == 0:
-#       print("Mean Return: " + str(mean_return))
-#       print("Episode Count: " + str(episode_count))
+    if done:
+        o = env.reset()
+        sum_return += curr_return
+        episode_count += 1
 
-#   return
+  sum_return = MPI.COMM_WORLD.allreduce(sum_return, MPI.SUM)
+  episode_count = MPI.COMM_WORLD.allreduce(episode_count, MPI.SUM)
+
+  mean_return = sum_return / episode_count
+
+  if MPI.COMM_WORLD.Get_rank() == 0:
+      print("Mean Return: " + str(mean_return))
+      print("Episode Count: " + str(episode_count))
+
+  return
+
 
 def step_real_bittle(ser, action):
-  # given action step the real life bittle
-
-  #joints_key = ['9','13','8','12','10','14','11','15']
-  #change actions to degrees
+  ''' Send the action as serial commands to real-life bittle
+      joints order key: '9','13','8','12','10','14','11','15'
+  '''
+  # change actions to degrees
   action = np.degrees(action)
-  task = ['i',[9,-action[0],13,-action[1],8,-action[2],12, -action[3], 10, -action[4],14,-action[5],11,-action[6],15,-action[7]],0.0167]
+  # set all joint angles simultaneously
+  task = ['i',[9,action[0],13,action[1],8,action[2],12, action[3], 10, action[4],14, action[5],11, action[6],15, action[7]],0]
   sendCommand(task)
-  time.sleep(.0333)
 
+def calibrate(env):
+  pass
 
 def main():
   arg_parser = argparse.ArgumentParser()
@@ -233,16 +245,30 @@ def main():
     model.load_parameters(args.model_file)
  
   if args.mode == "train":
-      train(model=model, 
+    train(model=model, 
             env=env, 
             total_timesteps=args.total_timesteps,
             output_dir=args.output_dir,
             int_save_freq=args.int_save_freq)
   elif args.mode == "test":
-      test(model=model,
+    test(model=model,
            env=env,
            num_procs=num_procs,
            num_episodes=args.num_test_episodes)
+  elif args.mode == "sim2real":
+    # run policy on the real life bittle
+    test_sim2real(model=model,
+      env=env,
+      num_procs=num_procs,
+      num_episodes=args.num_test_episodes) 
+  elif args.mode == "convert":
+    #Convert stable baselines policy to tensorflow
+    with model.graph.as_default():
+        tf.saved_model.simple_save(model.sess, 'model2_tf3', inputs={"obs":model.policy_pi.obs_ph},
+          outputs={"action":model.policy_pi.pdtype.sample_placeholder([None])})
+        print('Model successfully converted.')
+  elif args.mode == "calibrate":
+    calibrate(env)
   else:
       assert False, "Unsupported mode: " + args.mode
 

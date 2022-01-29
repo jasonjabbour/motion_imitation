@@ -324,7 +324,7 @@ class IMUSensor(sensor.BoxSpaceSensor):
       if channel == "dY":
         observations[i] = drpy[2]
 
-    # print("IMU Sensor----------------------------", observations)
+    #returns [Roll, Pitch, Roll Rate, Pitch Rate]
     return observations
 
 class BasePositionSensor(sensor.BoxSpaceSensor):

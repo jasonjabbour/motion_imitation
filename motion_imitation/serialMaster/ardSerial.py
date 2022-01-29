@@ -6,6 +6,7 @@ import sys
 import time
 import logging
 from serialMaster.SerialCommunication import *    # module SerialCommunication.py
+# from SerialCommunication import *
 import platform
 
 

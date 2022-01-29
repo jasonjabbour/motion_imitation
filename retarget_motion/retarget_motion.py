@@ -46,6 +46,7 @@ REF_TOE_JOINT_IDS = [10, 19, 15, 23]
 
 mocap_motions = [
   ["pace", "data/dog_walk00_joint_pos.txt",162,201],
+  ["pace_long", "data/dog_walk00_joint_pos.txt",162,500],
   ["trot", "data/dog_walk03_joint_pos.txt",448,481 ],
   ["trot2", "data/dog_run04_joint_pos.txt",630,663 ],
   ["canter", "data/dog_run00_joint_pos.txt", 430, 459],

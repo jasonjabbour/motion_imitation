@@ -35,6 +35,8 @@ from motion_imitation.robots import robot_config
 from motion_imitation.robots import action_filter
 from motion_imitation.robots import kinematics
 
+import time
+
 INIT_POSITION = [0, 0, .2]
 INIT_RACK_POSITION = [0, 0, 1]
 INIT_ORIENTATION = [0, 0, 0, 1]
@@ -257,6 +259,8 @@ class Minitaur(object):
       self._step_counter += 1
 
     self._last_action = action
+    
+    return proc_action
 
   def Terminate(self):
     pass
