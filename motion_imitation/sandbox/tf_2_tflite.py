@@ -55,7 +55,7 @@ import numpy as np
 #     print("Output layer: ", layers[-1])
 #     print("-" * 50)
 
-# # Load frozen graph using TensorFlow 1.x functions
+# Load frozen graph using TensorFlow 1.x functions
 # with tf.io.gfile.GFile("model2_tf/saved_model.pb", "rb") as f:
 #     graph_def = tf.compat.v1.GraphDef()
 #     loaded = graph_def.ParseFromString(f.read())
@@ -83,11 +83,11 @@ import numpy as np
 # tflite_model_file = pathlib.Path('model2.tflite')
 # tflite_model_file.write_bytes(tflite_model)
 
-# #Load TFLite Model and Allocate Tensors
+# # #Load TFLite Model and Allocate Tensors
 # interpreter = tf.lite.Interpreter(model_content=tflite_model)
 # interpreter.allocate_tensors()
 
-# #Get input and output tensors
+# # #Get input and output tensors
 # input_details = interpreter.get_input_details()
 # output_details = interpreter.get_output_details()
 # print(input_details)
@@ -120,8 +120,8 @@ import numpy as np
 
 # model = tf.keras.models.load_model('model2_tf')
 
-export_dir = 'model2_tf'
-model = tf.saved_model.load(export_dir)
+# export_dir = 'model2_tf'
+# model = tf.saved_model.load(export_dir)
 
 # export_dir = "model2_tf"
 # converter = tf.lite.TFLiteConverter.from_saved_model(export_dir)

@@ -92,7 +92,7 @@ if __name__ == '__main__':
             token = task[0][0]
             wrapper(task)
             response = ser.main_engine.read_all()
-            logger.info(f"Response is: {response.decode('utf-8')}")
+            logger.info(f"Response is: {response.decode('ISO-8859-1')}")
 
         closeSerialBehavior()
         logger.info("finish!")

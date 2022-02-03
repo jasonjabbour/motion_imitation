@@ -5,7 +5,10 @@ import struct
 import sys
 import time
 import logging
-from serialMaster.SerialCommunication import *    # module SerialCommunication.py
+try:
+    from serialMaster.SerialCommunication import *    # module SerialCommunication.py
+except:
+    from SerialCommunication import *
 # from SerialCommunication import *
 import platform
 
@@ -67,8 +70,7 @@ def serialWriteByte(var=None):
     if var is None:
         var = []
     token = var[0][0]
-    # print var
-    if (token == 'c' or token == 'm' or token == 'M' or token == 'b' or token == 'u') and len(var) >= 2:
+    if (token == 'c' or token == 'm' or token == 'M' or token == 'b' or token == 'u' or token =='c') and len(var) >= 2:
         in_str = ""
         for element in var:
             in_str = in_str + element + " "

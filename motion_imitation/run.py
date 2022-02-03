@@ -161,12 +161,16 @@ def test_sim2real(model, env, num_procs, num_episodes=None):
 
     #call to change motor angles of bittle
     step_real_bittle(ser, proc_action)
+
+    #rest
+    time.sleep(.007)
+
     #get imu data
-    imu_sensor = np.array(getBittleSensorInfo())
-    # print(imu_sensor)
-    o = np.concatenate((imu_sensor, o[12:]))
-   
-    time.sleep(.006)
+    real_joint_angles, imu_sensor = getBittleIMUSensorInfo()
+
+    #IMU: 0-11, Last Action: 12-35, Motor Angle: 36-59, Target: 60 - 119
+    o = np.concatenate((imu_sensor, o[12:36], real_joint_angles, o[60:]))
+
 
     curr_return += r
 
@@ -262,11 +266,17 @@ def main():
       num_procs=num_procs,
       num_episodes=args.num_test_episodes) 
   elif args.mode == "convert":
-    #Convert stable baselines policy to tensorflow
+    #Convert stable baselines policy to tensorflow'
+  
     with model.graph.as_default():
-        tf.saved_model.simple_save(model.sess, 'model2_tf3', inputs={"obs":model.policy_pi.obs_ph},
-          outputs={"action":model.policy_pi.pdtype.sample_placeholder([None])})
-        print('Model successfully converted.')
+      # print(model.get_parameter_list())
+      # print(model.get_parameters())
+      tf.lite.TFLiteConverter.from_session(model.sess, model.policy_pi.obs_ph,
+        model.policy_pi.pdtype.sample_placeholder([None]))
+      print('Model successfully converted.')
+      # tf.saved_model.simple_save(model.sess, 'model2_tf4', inputs={"obs":model.policy_pi.obs_ph},
+      #   outputs={"action":model.policy_pi.pdtype.sample_placeholder([None])})
+      # print('Model successfully converted.')
   elif args.mode == "calibrate":
     calibrate(env)
   else:
