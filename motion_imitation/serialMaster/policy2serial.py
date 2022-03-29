@@ -7,10 +7,13 @@ from cmath import pi
 from types import new_class
 import numpy as np
 
+#FIX
 try:
     from serialMaster.ardSerial import *
-except:
     from ardSerial import *
+except:
+    print(">>> ArdSerial Not Found (in policy2serial.py) Run from a different directory <<<")
+    
 
 roll_pitch_rollRate_pitchRate = [0,0,0,0]*3
 real_joint_angles = [0,0,0,0,0,0,0,0]*3

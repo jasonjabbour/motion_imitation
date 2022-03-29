@@ -1,3 +1,10 @@
+Model4_cutobs
+	- Description: Use only first 60 dim obs space with adding additional 60 dim of future frames
+	- Timesteps: 40,000,000
+	- Motion:  pace_bittle.txt
+		- Using frames: 162 - 201
+	- Save Frequency: 5,000,000
+
 Model3 
 	- Description: Use more mocap frames to train
 	- Timesteps: 10,000,000

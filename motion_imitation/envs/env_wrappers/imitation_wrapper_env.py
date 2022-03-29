@@ -31,13 +31,16 @@ class ImitationWrapperEnv(object):
       episode_length_start=1000,
       episode_length_end=1000,
       curriculum_steps=0,
-      num_parallel_envs=1):
+      num_parallel_envs=1,
+      cut_future_frames=False):
     """Initialzes the wrapped env.
 
     Args:
       gym_env: An instance of LocomotionGymEnv.
+      (MODIFIED) cut_future_frames: If true don't add 4 future frames to observational space
     """
     self._gym_env = gym_env
+    self._cut_future_frames = cut_future_frames
     self.observation_space = self._build_observation_space()
 
     self._episode_length_start = episode_length_start
@@ -113,6 +116,11 @@ class ImitationWrapperEnv(object):
       A numpy array contains the initial original concatenated with target
       observations from the reference motion.
     """
+    #MODIFIED: If true don't include 4 future frames into obs space
+    if self._cut_future_frames:
+      #only return the first 60 dim of sensor input without future 4 frames
+      return original_observation
+
     target_observation = self._task.build_target_obs()
     observation = np.concatenate([original_observation, target_observation], axis=-1)
     return observation
@@ -128,6 +136,11 @@ class ImitationWrapperEnv(object):
     obs_space0 = self._gym_env.observation_space
     low0 = obs_space0.low
     high0 = obs_space0.high
+
+    #MODIFIED: Don't extend observational space with 4 future frames if true
+    if self._cut_future_frames:
+      #instead of returning an observational space extended by 60 dimensions, return original 60 dimensions of only sensors
+      return obs_space0
 
     task_low, task_high = self._task.get_target_obs_bounds()
     low = np.concatenate([low0, task_low], axis=-1)

@@ -115,7 +115,7 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
   if (output_dir == ""):
     save_path = None
   else:
-    save_path = os.path.join(output_dir, "model3.zip")
+    save_path = os.path.join(output_dir, "model4_cutobs.zip")
     if not os.path.exists(output_dir):
       os.makedirs(output_dir)
   
@@ -124,9 +124,9 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
   # Save a checkpoint every n steps
   if (output_dir != ""):
     if (int_save_freq > 0):
-      int_dir = os.path.join(output_dir, "intermedate")
+      int_dir = os.path.join(output_dir, "model4_cutobs_intermedate")
       callbacks.append(CheckpointCallback(save_freq=int_save_freq, save_path=int_dir,
-                                          name_prefix='model2'))
+                                          name_prefix='model4_cutobs'))
 
   model.learn(total_timesteps=total_timesteps, save_path=save_path, callback=callbacks)
 
@@ -450,6 +450,10 @@ def main():
   arg_parser.add_argument("--int_save_freq", dest="int_save_freq", type=int, default=0) # save intermediate model every n policy steps
   arg_parser.add_argument("--robot", dest="specified_robot", type=str, default="laikago")
 
+  # If True, returns a 60 dim obs space instead of 120 dim. The 4 future reference frames are cut (15 each)
+  # Change is made to imitation_wrapper_env.py
+  arg_parser.add_argument("--obs_cut_future_frames", dest="obs_cut_future_frames", action="store_true", default=False)
+
   args = arg_parser.parse_args()
   
   num_procs = MPI.COMM_WORLD.Get_size()
@@ -470,7 +474,8 @@ def main():
                                         enable_randomizer=enable_env_rand,
                                         enable_rendering=args.visualize,
                                         robot_class=robot_class, 
-                                        robot=robot)
+                                        robot=robot,
+                                        obs_cut_future_frames=args.obs_cut_future_frames)
   model = build_model(env=env,
                       num_procs=num_procs,
                       timesteps_per_actorbatch=TIMESTEPS_PER_ACTORBATCH,
@@ -528,7 +533,7 @@ def main():
       # print(model.get_parameters())
       print(model.policy_pi.policy_proba[0])
       print(model.policy_pi.policy_proba[1])
-      tf.saved_model.simple_save(model.sess, 'model2_tf_test8_axis0', inputs={"obs":model.policy_pi.obs_ph},
+      tf.saved_model.simple_save(model.sess, 'model2_tf_test8_axis1', inputs={"obs":model.policy_pi.obs_ph},
         outputs={"action": tf.concat(model.policy_pi.policy_proba, axis=1, name="chicken")})
 
     print('Model successfully converted.')

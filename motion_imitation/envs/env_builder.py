@@ -80,7 +80,8 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
                         enable_randomizer, enable_rendering,
                         robot_class=laikago.Laikago,
                         robot=laikago,
-                        trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=laikago.UPPER_BOUND)):
+                        trajectory_generator=simple_openloop.LaikagoPoseOffsetGenerator(action_limit=laikago.UPPER_BOUND),
+                        obs_cut_future_frames=False):
 
   assert len(motion_files) > 0
 
@@ -145,7 +146,8 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
                                                   episode_length_start=curriculum_episode_length_start,
                                                   episode_length_end=curriculum_episode_length_end,
                                                   curriculum_steps=30000000,
-                                                  num_parallel_envs=num_parallel_envs)
+                                                  num_parallel_envs=num_parallel_envs,
+                                                  cut_future_frames=obs_cut_future_frames)
   return env
 
 
