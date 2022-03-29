@@ -180,7 +180,7 @@ class ImitationTask(object):
     if (self._ref_motions is None or self._env.hard_reset):
       self._ref_motions = self._load_ref_motions(self._ref_motion_filenames)
       self._active_motion_id = self._sample_ref_motion()
-
+    
     if (self._ref_model is None or self._env.hard_reset):
       self._ref_model = self._build_ref_model()
       self._build_joint_data()

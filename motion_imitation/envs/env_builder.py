@@ -89,8 +89,10 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
     trajectory_generator=simple_openloop.BittlePoseOffsetGenerator(action_limit=bittle.UPPER_BOUND)
 
   curriculum_episode_length_start = 20
-  curriculum_episode_length_end = 600
-  
+  # curriculum_episode_length_end = 600
+  # curriculum_episode_length_end = 300
+  curriculum_episode_length_end = 500
+
   #Set Simulation Parameters
   sim_params = locomotion_gym_config.SimulationParameters()
   sim_params.enable_rendering = enable_rendering

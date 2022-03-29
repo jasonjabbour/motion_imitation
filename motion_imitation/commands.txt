@@ -21,3 +21,25 @@ python motion_imitation/run.py --mode convert --motion_file motion_imitation/dat
 
 Bittle Sim2Real Test
 python motion_imitation/run.py --mode sim2real --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/model2.zip --robot bittle
+
+Freeze Model:
+python freeze_graph.py --input_graph= "C:\Users\jjaso\Desktop\UVA Jason\Research Harvard TinyML\bittle_env\cs249-assignment2\model2_tf_test8_axis1\saved_model.pb" --input_saved_model_dir="C:\Users\jjaso\Desktop\UVA Jason\Research Harvard TinyML\bittle_env\cs249-assignment2\model2_tf_test8_axis1" --input_binary=true --output_graph=bittle_frozen.pb --output_node_names=chicken
+
+
+Commands for run_tflite.py 
+--------------------------
+
+Convert Frozen PB to TFlite
+python motion_imitation/run_tflite.py --mode frozen2tflite
+
+Test TFlite Model
+python motion_imitation/run_tflite.py --mode test_tflite
+
+Commands for bittle_controller/run_tflite_raw.py
+------------------------------------------------
+
+Verify TFLite Output with Stable Baselines output
+python run_tflite_raw.py --mode verify
+
+Time TFLite Processing Time
+python run_tflite_raw.py --mode time

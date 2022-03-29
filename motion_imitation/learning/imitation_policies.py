@@ -92,7 +92,7 @@ class ImitationPolicy(FeedForwardPolicy):
             if layers is None:
                 layers = [64, 64]
             net_arch = [dict(vf=layers, pi=layers)]
-
+            
         with tf.variable_scope("model", reuse=reuse):
             if feature_extraction == "cnn":
                 pi_latent = vf_latent = cnn_extractor(self.processed_obs, **kwargs)
