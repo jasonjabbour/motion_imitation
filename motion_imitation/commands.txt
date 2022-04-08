@@ -25,14 +25,6 @@ python motion_imitation/run.py --mode sim2real --motion_file motion_imitation/da
 Freeze Model:
 python freeze_graph.py --input_graph= "C:\Users\jjaso\Desktop\UVA Jason\Research Harvard TinyML\bittle_env\cs249-assignment2\model2_tf_test8_axis1\saved_model.pb" --input_saved_model_dir="C:\Users\jjaso\Desktop\UVA Jason\Research Harvard TinyML\bittle_env\cs249-assignment2\model2_tf_test8_axis1" --input_binary=true --output_graph=bittle_frozen.pb --output_node_names=chicken
 
---- Reduced Obs Space ---
-Bittle Train with only 60 Dim OBS Space on parallel cores:
-mpiexec -n 8 python motion_imitation/run.py --mode train --motion_file motion_imitation/data/motions/pace_bittle.txt --int_save_freq 5000000 --robot bittle --total_timesteps 40000000 --obs_cut_future_frames
-
-Bittle Test with only 60 Dim OBS Space:
-python motion_imitation/run.py --mode test --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/model4_cutobsTEST.zip --obs_cut_future_frames --visualize --robot bittle
-
-
 Commands for run_tflite.py 
 --------------------------
 
@@ -50,3 +42,49 @@ python run_tflite_raw.py --mode verify
 
 Time TFLite Processing Time
 python run_tflite_raw.py --mode time
+
+--------------------------
+--- Reduced Obs Space ---
+-------------------------
+Bittle Train with only 60 Dim OBS Space on parallel cores:
+mpiexec -n 8 python motion_imitation/run.py --mode train --motion_file motion_imitation/data/motions/pace_bittle.txt --int_save_freq 5000000 --robot bittle --total_timesteps 40000000 --obs_cut_future_frames
+
+Bittle Test SB with only 60 Dim OBS Space:
+python motion_imitation/run.py --mode test --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/all_model7/model7_cutobs.zip --obs_cut_future_frames --visualize --robot bittle
+
+Convert SB Model to TF (only 60 Dim):
+python motion_imitation/run.py --mode convert --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/all_model7/model7_cutobs.zip --robot bittle --obs_cut_future_frames
+
+PB -> Freeze PB -> TFLite
+python motion_imitation/run_tflite.py --mode full_pipeline --model_number 7
+
+Test TFLite Model:
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames
+
+Verify TFLite Model 
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --verify
+
+---- run_tflite_raw.py ----
+Deploy model on bittle:
+python run_tflite_raw.py --mode deploy --tflite_model output/bittle_frozen_model7
+
+-----------------
+
+-----------------
+
+-----------------
+
+----- Saved Commands ------
+# Access the model's parameters
+# for key, value in model.get_parameters().items():
+#       print(key, value.shape)
+
+# Stable Baselines Model Action Probabilities
+# obs = env.reset()
+# does not make sense for continuous actions
+# print(model.action_probability(obs)) #https://github.com/hill-a/stable-baselines/issues/126
+
+# print(model.get_parameter_list())
+# print(model.get_parameters())
+# print(model.policy_pi.policy_proba[0])
+# print(model.policy_pi.policy_proba[1])

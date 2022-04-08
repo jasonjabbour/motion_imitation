@@ -32,6 +32,7 @@ import math
 import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
+import re
 
 from motion_imitation.envs import env_builder as env_builder
 from motion_imitation.learning import imitation_policies as imitation_policies
@@ -43,10 +44,6 @@ from stable_baselines.common.callbacks import CheckpointCallback
 
 from serialMaster.policy2serial import *
 from sandbox.stable_2_pytorch import *
-
-from tensorflow.core.framework import graph_pb2
-from tensorflow.python.platform import gfile
-
 
 TIMESTEPS_PER_ACTORBATCH = 4096
 OPTIM_BATCHSIZE = 256
@@ -132,7 +129,7 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
 
   return
 
-def test(model, env, num_procs, num_episodes=None):
+def test(model, env, num_procs, num_episodes=None, save_verification_data=False, model_number=0):
   curr_return = 0
   sum_return = 0
   episode_count = 0
@@ -158,7 +155,6 @@ def test(model, env, num_procs, num_episodes=None):
     save_action_lists(a)
     #Get delta of actions
     calculate_angle_change(a)
-
 
     if done:
         o = env.reset()
@@ -198,11 +194,13 @@ def test(model, env, num_procs, num_episodes=None):
   # plt.show()
 
   #SAVE INFO
-  # saved_info_dict={'obs':SAVED_OBS,'actions':SAVED_ACTIONS_LISTS}
-  # print(SAVED_ACTIONS_LISTS)
+  if save_verification_data:
+    saved_info_dict={'obs':SAVED_OBS,'actions':SAVED_ACTIONS_LISTS}
 
-  # with open('saved_info_1000steps.pickle', 'wb') as handle:
-  #   pickle.dump(saved_info_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('output/all_model'+model_number+'/saved_info_1ep_model'+model_number+'.pickle', 'wb') as handle:
+      pickle.dump(saved_info_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    print('>> Verification data for one episode saved to pickle file <<')
 
   return
 
@@ -503,40 +501,27 @@ def main():
       env=env,
       num_procs=num_procs,
       num_episodes=args.num_test_episodes) 
-  elif args.mode == "convert":    
-    #Access the model's parameters
-    # for key, value in model.get_parameters().items():
-    #       print(key, value.shape)
-    # model/pi_fc0/w:0 (120, 512)
-    # model/pi_fc0/b:0 (512,)
-    # model/vf_fc0/w:0 (120, 512)
-    # model/vf_fc0/b:0 (512,)
-    # model/pi_fc1/w:0 (512, 256)
-    # model/pi_fc1/b:0 (256,)
-    # model/vf_fc1/w:0 (512, 256)
-    # model/vf_fc1/b:0 (256,)
-    # model/vf/w:0 (256, 1)
-    # model/vf/b:0 (1,)
-    # model/pi/w:0 (256, 8)
-    # model/pi/b:0 (8,)
-    # model/q/w:0 (256, 8)
-    # model/q/b:0 (8,)
+  elif args.mode == "convert":
 
-    #Stable Baselines Model Action Probabilities
-    # obs = env.reset()
-    # #does not make sense for continuous actions
-    # print(model.action_probability(obs)) #https://github.com/hill-a/stable-baselines/issues/126
+    #Parse out the model number
+    model_number = re.findall(r'\d+',  args.model_file)
+    assert len(model_number) > 0, 'Model name must include a number'
+    model_number = model_number[0]
 
     #Convert stable baselines policy to tensorflow:
     with model.graph.as_default():
-      # print(model.get_parameter_list())
-      # print(model.get_parameters())
-      print(model.policy_pi.policy_proba[0])
-      print(model.policy_pi.policy_proba[1])
-      tf.saved_model.simple_save(model.sess, 'model2_tf_test8_axis1', inputs={"obs":model.policy_pi.obs_ph},
+      tf.saved_model.simple_save(model.sess, 'output/all_model'+model_number+'/model'+model_number+'_tf', inputs={"obs":model.policy_pi.obs_ph},
         outputs={"action": tf.concat(model.policy_pi.policy_proba, axis=1, name="chicken")})
 
-    print('Model successfully converted.')
+    # Run one episode to save obs and the actions
+    test(model=model,
+           env=env,
+           num_procs=num_procs,
+           num_episodes=1, 
+           save_verification_data=True,
+           model_number=model_number)
+    
+    print('>> Model successfully converted. << ')
 
   elif args.mode == "calibrate":
     calibrate(env)

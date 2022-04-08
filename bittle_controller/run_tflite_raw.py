@@ -6,6 +6,10 @@ import time
 import matplotlib.pyplot as plt
 import argparse
 
+from serialMaster.policy2serial import *
+
+STEPS = 300
+
 def verify_tflite(interpreter, saved_info, show_output=False):
     '''Use tflite to make predictions and compare predictions to stablebaselines output
     
@@ -38,9 +42,6 @@ def verify_tflite(interpreter, saved_info, show_output=False):
             print("SB Saved Output", saved_info['actions'][i])
             print('\n')
 
-        #Send action:
-
-        #Receive Observations:
 
 def model_processing_time(plot_time=False, trials=5):
     '''#Run 5 Different Saved Info Files 5 Times
@@ -82,6 +83,66 @@ def model_processing_time(plot_time=False, trials=5):
         plt.xlabel('Trial')
         plt.ylabel('Time (s)')
         plt.savefig('captures/tflite_time_test.png')
+
+
+def deploy_on_bittle(interpreter):
+    '''Deploy model on real life bittle and receive feedback
+    
+    interpreter: Loaded frozen tflite model
+    '''
+    #Prepare tflite model
+    interpreter.allocate_tensors()
+
+    # Get input and output tensors.
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    #initialize commands
+    initializeCommands()
+
+    #get initial obs
+    real_joint_angles, imu_sensor = getBittleIMUSensorInfo()
+
+    #initialize last action queue
+    last_action_queue = [0]*24
+
+    #IMU: 0-11, Last Action: 12-35, Motor Angle: 36-59, Target: 60 - 119
+    obs = np.concatenate((imu_sensor,last_action_queue,real_joint_angles))
+
+    for i in range(STEPS):
+
+        input_data = obs.reshape(1, -1)
+        input_data = np.array(input_data, dtype=np.float32)
+        interpreter.set_tensor(input_details[0]['index'],input_data)
+
+        interpreter.invoke()
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        output_data = np.array(output_data).flatten()
+        output_data = output_data[:8]
+
+        #Send action:
+        step_real_bittle(output_data)
+
+        #Receive Observations:
+        real_joint_angles, imu_sensor = getBittleIMUSensorInfo()
+
+        #Update last action queue by appending to top and removing last 8
+        last_action_queue = np.concatenate((output_data,last_action_queue))
+        last_action_queue = last_action_queue[:24]
+
+        #Create full observation with 60 dim
+        obs = np.concatenate((imu_sensor, last_action_queue, real_joint_angles))
+
+        time.sleep(.5)
+
+def step_real_bittle(action):
+    # change actions to degrees
+    action = np.degrees(action)
+    print(action)
+
+    # set all joint angles simultaneously
+    task = ['i',[9,action[0],13,action[1],8,action[2],12, action[3], 10, action[4],14, action[5],11, action[6],15, action[7]],0]
+    sendCommand(task)
 
 
 def load_model(tflite_model_name):
@@ -134,6 +195,14 @@ if __name__ == "__main__":
 
         #Verify TFLite model output with Stable Baselines model output
         verify_tflite(tflite_interpreter, saved_info, show_output=True)
+
+    elif mode == 'deploy':
+        #Load the model
+        tflite_interpreter = load_model(args.tflite_model)
+
+        #Verify TFLite model output with Stable Baselines model output
+        deploy_on_bittle(tflite_interpreter)
+
 
 
 
