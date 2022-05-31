@@ -15,14 +15,14 @@ import platform
 
 FORMAT = '%(asctime)-15s %(name)s - %(levelname)s - %(message)s'
 '''
-Level: The level determines the minimum priority level of messages to log. 
-Messages will be logged in order of increasing severity: 
-DEBUG is the least threatening, 
-INFO is also not very threatening, 
-WARNING needs attention, 
-ERROR needs immediate attention, 
-and CRITICAL means “drop everything and find out what’s wrong.” 
-The default starting point is INFO, 
+Level: The level determines the minimum priority level of messages to log.
+Messages will be logged in order of increasing severity:
+DEBUG is the least threatening,
+INFO is also not very threatening,
+WARNING needs attention,
+ERROR needs immediate attention,
+and CRITICAL means “drop everything and find out what’s wrong.”
+The default starting point is INFO,
 which means that the logging module will automatically filter out any DEBUG messages.
 '''
 # logging.basicConfig(level=logging.DEBUG, format=FORMAT)
@@ -50,19 +50,21 @@ def wrapper(task):  # task Structure is [token, var=[], time]
 def serialWriteNumToByte(token, var=None):  # Only to be used for c m u b i l o within Python
     # print("Num Token "); print(token);print(" var ");print(var);print("\n\n");
     logger.debug(f'serialWriteNumToByte, token={token}, var={var}')
-
-    in_str = ""
-    if var is None:
-        var = []
-    if token == 'l' or token == 'i':
-        var = list(map(int, var))
-        in_str = token.encode() + struct.pack('b' * len(var), *var) + '~'.encode()
-    elif token == 'c' or token == 'm' or token == 'M' or token == 'u' or token == 'b':
-        in_str = token + " "
-        for element in var:
-            in_str = in_str + str(element) + " "
-    logger.debug(f"!!!! {in_str}")
-    ser.Send_data(encode(in_str))
+    try:
+        in_str = ""
+        if var is None:
+            var = []
+        if token == 'l' or token == 'i':
+            var = list(map(int, var))
+            in_str = token.encode() + struct.pack('b' * len(var), *var) + '~'.encode()
+        elif token == 'c' or token == 'm' or token == 'M' or token == 'u' or token == 'b':
+            in_str = token + " "
+            for element in var:
+                in_str = in_str + str(element) + " "
+        logger.debug(f"!!!! {in_str}")
+        ser.Send_data(encode(in_str))
+    except Exception as e:
+        print('Error in ardSerial.py serialWriteNumToByte() Token:',token,'Var:',var,'Error:',e)
 
 
 def serialWriteByte(var=None):
@@ -126,7 +128,8 @@ def flushSeialOutput(counterLimit=300):
 
 Communication.Print_Used_Com()
 port = port_list_number
-port = ['COM5']
+#port = ['COM10']
+port = ['/dev/rfcomm0'] #for raspberry pi zero 2W
 total = len(port)
 index = 0
 for index in range(total):
@@ -141,7 +144,7 @@ if len(port) > 1:
     then reopen the terminal and rerun the script.
     """
     if platform.uname()[1] == 'raspberrypi':
-        serialPort = '/dev/ttyS0'  # needed when plug in RaspberryPi
+        serialPort = '/dev/rfcomm0' #'/dev/ttyS0'  # needed when plug in RaspberryPi
         ser = Communication(serialPort, 115200, 0.5)
         logger.info(f"Connect to usb serial port: {serialPort}.")
         serialWriteByte(["d"])
@@ -160,12 +163,12 @@ if len(port) > 1:
             print("to connect to another serial port")
             print("then reopen the terminal and rerun the script")
     else:
-        bluetoothPortIndex = -1    #0 means connetct to port[0]; -1 means connetct to the last port in the list
+        bluetoothPortIndex = 0    #0 means connetct to port[0]; -1 means connetct to the last port in the list
         ser = Communication(port[bluetoothPortIndex], 115200, 0.5)
         logger.info(f"Connect to Bluetooth serial port: {port[bluetoothPortIndex]}.")
 else:
     if platform.uname()[1] == 'raspberrypi':
-        serialPort = '/dev/ttyS0'  # needed when plug in RaspberryPi
+        serialPort = '/dev/rfcomm0' #'/dev/ttyS0'  # needed when plug in RaspberryPi
         ser = Communication(serialPort, 115200, 0.5)
         logger.info(f"Connect to usb serial port: {serialPort}.")
     else:

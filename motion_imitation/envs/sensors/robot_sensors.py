@@ -21,6 +21,8 @@ from __future__ import print_function
 
 import os
 import inspect
+
+from torch import rand
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(os.path.dirname(currentdir))
 os.sys.path.insert(0, parentdir)
@@ -244,7 +246,11 @@ class IMUSensor(sensor.BoxSpaceSensor):
       name: the name of the sensor
       dtype: data type of sensor value
     """
-    self._channels = channels if channels else ["R", "P", "dR", "dP"]
+    # self._channels = channels if channels else ["R", "P", "dR", "dP"]
+    # New add YAW to observational space
+    #self._channels = channels if channels else ["R", "P", "Y", "dR", "dP", "dY"]
+    # NEW
+    self._channels = channels if channels else ["R", "P", "Y"]
     self._num_channels = len(self._channels)
     self._noisy_reading = noisy_reading
 

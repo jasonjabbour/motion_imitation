@@ -162,3 +162,59 @@ Some MPC parts for A1 and running on real A1 are written by Yuxiang Yang, a form
 
 *Disclaimer: This is not an official Google product.*
 
+
+# Motion Imitation adapted for Bittle
+![](captures/Model13_tflite_gif.gif)
+
+Bittle Train with only 60 Dim OBS Space on parallel cores
+```bash
+mpiexec -n 8 python motion_imitation/run.py --mode train --motion_file motion_imitation/data/motions/pace_bittle.txt --int_save_freq 5000000 --robot bittle --total_timesteps 40000000 --obs_cut_future_frames
+```
+
+Bittle Test SB with only 60 Dim OBS Space
+```bash
+python motion_imitation/run.py --mode test --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/all_model7/model7_cutobs.zip --obs_cut_future_frames --visualize --robot bittle
+```
+
+## Pipeline to convert SB to Quantized TFLite Model
+Convert SB Model to TF (only 60 Dim)
+```bash
+python motion_imitation/run.py --mode convert --motion_file motion_imitation/data/motions/pace_bittle.txt --model_file output/all_model7/model7_cutobs.zip --robot bittle --obs_cut_future_frames
+```
+
+PB -> Freeze PB -> TFLite
+```bash
+python motion_imitation/run_tflite.py --mode full_pipeline --model_number 7
+```
+
+Quantize TFLite
+```bash
+python motion_imitation/run_tflite.py --mode quantize --model_number 7
+```
+
+Test TFLite Model
+```bash
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --model_number 7
+```
+
+Verify TFLite Model 
+```bash
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --verify --model_number 7
+```
+
+Verfiy (or Test) TFLite Quantized Model
+```bash
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --verify --model_number 7 --quantized_model
+```
+
+```bash
+Test on Real Bittle:
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --model_number 7 --real_bittle
+```
+
+## Run on Real Bittle
+
+Move bittle_controller directory to raspberry pi and run:
+```bash
+python run_tflite_raw.py --mode deploy --model_number 13
+```

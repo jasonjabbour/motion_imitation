@@ -39,10 +39,11 @@ class SimulationParameters(object):
   motor_control_mode = attr.ib(type=int,
                                default=robot_config.MotorControlMode.POSITION)
   reset_time = attr.ib(type=float, default=-1)
-  enable_action_filter = attr.ib(type=bool, default=True)
-  enable_action_interpolation = attr.ib(type=bool, default=True)
+  enable_action_filter = attr.ib(type=bool, default=False) #NEW
+  enable_action_interpolation = attr.ib(type=bool, default=False) #NEW
   allow_knee_contact = attr.ib(type=bool, default=False)
   enable_clip_motor_commands = attr.ib(type=bool, default=True)
+  dead_zone = attr.ib(type=bool, default=True) #NEW
 
 
 @attr.s

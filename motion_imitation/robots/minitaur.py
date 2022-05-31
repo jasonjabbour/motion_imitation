@@ -58,7 +58,7 @@ _BRACKET_NAME_PATTERN = re.compile(r"motor\D*_bracket_joint")
 _LEG_NAME_PATTERN1 = re.compile(r"hip\D*joint")
 _LEG_NAME_PATTERN2 = re.compile(r"hip\D*link")
 _LEG_NAME_PATTERN3 = re.compile(r"motor\D*link")
-SENSOR_NOISE_STDDEV = (0.0, 0.0, 0.0, 0.0, 0.0)
+SENSOR_NOISE_STDDEV = (0.0, 0.0, 0.0, 0.1, 0.0) #NEW was all zeroz
 MINITAUR_DEFAULT_MOTOR_DIRECTIONS = (-1, -1, -1, -1, 1, 1, 1, 1)
 MINITAUR_DEFAULT_MOTOR_OFFSETS = (0, 0, 0, 0, 0, 0, 0, 0)
 MINITAUR_NUM_MOTORS = 8
@@ -110,7 +110,8 @@ class Minitaur(object):
                sensors=None,
                enable_action_interpolation=False,
                enable_action_filter=False,
-               reset_time=-1):
+               reset_time=-1, 
+               dead_zone=False): #NEW
     """Constructs a minitaur and reset it to the initial states.
 
     Args:
@@ -190,6 +191,7 @@ class Minitaur(object):
     self._enable_action_interpolation = enable_action_interpolation
     self._enable_action_filter = enable_action_filter
     self._last_action = None
+    self._dead_zone = dead_zone #NEW
 
     if not motor_model_class:
       raise ValueError("Must provide a motor model class!")
@@ -253,13 +255,20 @@ class Minitaur(object):
       action = self._FilterAction(action)
     if control_mode==None:
       control_mode = self._motor_control_mode
-    for i in range(self._action_repeat):
+    
+    #NEW, create a deadzone where motor is not moved if action is less than 1 deg difference
+    if self._dead_zone == True and self._last_action is not None:
+      for joint_num, angle in enumerate(action):
+        if abs(angle-self._last_action[joint_num]) <= .0175: #1deg
+          action[joint_num] = self._last_action[joint_num]
+
+    #interpolation used to control motors, final processed action == filtered action
+    for i in range(self._action_repeat): #33
       proc_action = self.ProcessAction(action, i)
       self._StepInternal(proc_action, control_mode)
       self._step_counter += 1
-
     self._last_action = action
-    
+
     return proc_action
 
   def Terminate(self):
@@ -846,6 +855,7 @@ class Minitaur(object):
     """
     angular_velocity = self._pybullet_client.getBaseVelocity(self.quadruped)[1]
     orientation = self.GetTrueBaseOrientation()
+
     return self.TransformAngularVelocityToLocalFrame(angular_velocity,
                                                      orientation)
 
@@ -869,7 +879,7 @@ class Minitaur(object):
     # translation and reverse of the given orientation.
     relative_velocity, _ = self._pybullet_client.multiplyTransforms(
         [0, 0, 0], orientation_inversed, angular_velocity,
-        self._pybullet_client.getQuaternionFromEuler([0, 0, 0]))
+        self._pybullet_client.getQuaternionFromEuler([0, 0, 0])) #(0, 0, 0, 1)
     return np.asarray(relative_velocity)
 
   def GetBaseRollPitchYawRate(self):
@@ -1181,6 +1191,7 @@ class Minitaur(object):
     Returns:
       observation: The observation which was actually latency seconds ago.
     """
+    #latency = .002 seconds
     if latency <= 0 or len(self._observation_history) == 1:
       observation = self._observation_history[0]
     else:

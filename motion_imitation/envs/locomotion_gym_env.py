@@ -137,9 +137,11 @@ class LocomotionGymEnv(gym.Env):
 
     # Construct the observation space from the list of sensors. Note that we
     # will reconstruct the observation_space after the robot is created.
+    # NEW, will not include the motor angles in observational space
+    sensors_in_obs = [self.all_sensors()[1]] + [self.all_sensors()[2]]
     self.observation_space = (
         space_utils.convert_sensors_to_gym_space_dictionary(
-            self.all_sensors()))
+            sensors_in_obs)) #NEW
 
   def _build_action_space(self):
     """Builds action space based on motor control mode."""
@@ -245,7 +247,8 @@ class LocomotionGymEnv(gym.Env):
           enable_action_interpolation=self._gym_config.simulation_parameters.
           enable_action_interpolation,
           allow_knee_contact=self._gym_config.simulation_parameters.
-          allow_knee_contact)
+          allow_knee_contact, 
+          dead_zone=self._gym_config.simulation_parameters.dead_zone) #NEW
 
     # Reset the pose of the robot.
     self._robot.Reset(reload_urdf=False,

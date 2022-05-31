@@ -159,6 +159,7 @@ class Bittle(minitaur.Minitaur):
       enable_action_filter=False,
       reset_time=-1,
       allow_knee_contact=False,
+      dead_zone=False #NEW
   ):
     self._urdf_filename = urdf_filename
     self._allow_knee_contact = allow_knee_contact
@@ -195,7 +196,8 @@ class Bittle(minitaur.Minitaur):
         on_rack=on_rack,
         enable_action_interpolation=enable_action_interpolation,
         enable_action_filter=enable_action_filter,
-        reset_time=reset_time)
+        reset_time=reset_time, 
+        dead_zone=dead_zone) #NEW
 
   def _LoadRobotURDF(self):
     bittle_urdf_path = self.GetURDFFile()

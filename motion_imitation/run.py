@@ -112,7 +112,7 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
   if (output_dir == ""):
     save_path = None
   else:
-    save_path = os.path.join(output_dir, "model4_cutobs.zip")
+    save_path = os.path.join(output_dir, "model15_cutobs.zip")
     if not os.path.exists(output_dir):
       os.makedirs(output_dir)
   
@@ -121,9 +121,9 @@ def train(model, env, total_timesteps, output_dir="", int_save_freq=0):
   # Save a checkpoint every n steps
   if (output_dir != ""):
     if (int_save_freq > 0):
-      int_dir = os.path.join(output_dir, "model4_cutobs_intermedate")
+      int_dir = os.path.join(output_dir, "model15_cutobs_intermedate")
       callbacks.append(CheckpointCallback(save_freq=int_save_freq, save_path=int_dir,
-                                          name_prefix='model4_cutobs'))
+                                          name_prefix='model15_cutobs'))
 
   model.learn(total_timesteps=total_timesteps, save_path=save_path, callback=callbacks)
 
@@ -133,6 +133,12 @@ def test(model, env, num_procs, num_episodes=None, save_verification_data=False,
   curr_return = 0
   sum_return = 0
   episode_count = 0
+
+  angle_analysis = False 
+
+  if angle_analysis:
+    delta_lst = []
+    previous_saved_action = [0]*8 
 
   if num_episodes is not None:
     num_local_episodes = int(np.ceil(float(num_episodes) / num_procs))
@@ -157,9 +163,15 @@ def test(model, env, num_procs, num_episodes=None, save_verification_data=False,
     calculate_angle_change(a)
 
     if done:
-        o = env.reset()
-        sum_return += curr_return
-        episode_count += 1
+      o = env.reset()
+      sum_return += curr_return
+      episode_count += 1
+    
+    if angle_analysis:
+      print(len(o[12:20]))
+      for joint, angle in enumerate(o[12:20]):
+        delta_lst.append(abs(np.degrees(angle)-previous_saved_action[joint]))
+        previous_saved_action = o[12:20]
 
   sum_return = MPI.COMM_WORLD.allreduce(sum_return, MPI.SUM)
   episode_count = MPI.COMM_WORLD.allreduce(episode_count, MPI.SUM)
@@ -167,8 +179,8 @@ def test(model, env, num_procs, num_episodes=None, save_verification_data=False,
   mean_return = sum_return / episode_count
 
   if MPI.COMM_WORLD.Get_rank() == 0:
-      print("Mean Return: " + str(mean_return))
-      print("Episode Count: " + str(episode_count))
+    print("Mean Return: " + str(mean_return))
+    print("Episode Count: " + str(episode_count))
   
   # print(CHANGE_BANK)
   # print(SAVED_ACTIONS)
@@ -192,6 +204,12 @@ def test(model, env, num_procs, num_episodes=None, save_verification_data=False,
   # plt.ylabel("Pose")
   # #Show plot
   # plt.show()
+
+  #Plot histogram of joint angle change 
+  # if angle_analysis:
+  #   plt.hist(delta_lst, bins=30)
+  #   plt.show()
+  #   print(f'The average angle change is: {sum(delta_lst)/len(delta_lst)}')
 
   #SAVE INFO
   if save_verification_data:

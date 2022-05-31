@@ -1,4 +1,40 @@
-Model7_cutobs
+Model 13:
+	- discount factor: .99
+	- training 60 million steps
+	- reward function: penalize for yaw deviation 
+	- add yaw, remove rates, and make more history
+	- obs space size 42: IMU (roll, pitch, yaw) 3*6=18, last action = 8*3 = 24
+	- remove butterworth filter (_enable_action_filter = False)
+	- remove interpolation (_enable_action_interpolation = False)
+	- include a dead zone for changes of less than 1 degree
+	- adjust weights in reward function: (see notebook)
+	- lateral friction range changed from [.5, 1.25] to [.05, .75]
+	- feed back loop latency changed from [0.0, 0.04] to [0.0, 0.1]
+	- added noise to IMU, .1 rad std
+	- Changes made to observation_dictionary_to_array_wrapper.py, locomotion_gym_env.py, bittle.py, minitaur.py, locomotion_gym_config.py, robot_sensors.py, minitaur_env_randomizer_config.py
+
+Model 11:
+	- discount factor: .99
+	- training 60 million steps
+	- reward function: penalize for yaw deviation 
+	- add yaw and yaw rate to observational space
+	- obs space size 42: IMU (yaw and yaw rate), last action
+	- remove butterworth filter (_enable_action_filter = False)
+	- remove interpolation (_enable_action_interpolation = False)
+	- include a dead zone for changes of less than 1 degree
+	- adjust weights in reward function: (see notebook)
+	- Changes made to observation_dictionary_to_array_wrapper.py, locomotion_gym_env.py, bittle.py, minitaur.py, locomotion_gym_config.py, robot_sensors.p, imitation_task.py
+
+Model 10 (Best Straight direction):
+	- discount factor: .99
+	- training 60million steps
+	- reward function: penalize for yaw deviation 
+	- add yaw and yaw rate to observational space
+	- obs space size 66
+	- Changes made to robot_sensors.py and imitation_task.py (labeled with "NEW")
+	- Very straight but small steps
+
+Model7_cutobs (Best Imitation looking)
 	- Description: Use only first 60 dim obs space with adding additional 60 dim of future frames
 	- Timesteps: 56,000,000
 	- Motion:  pace_bittle.txt

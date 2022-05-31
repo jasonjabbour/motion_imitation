@@ -110,7 +110,7 @@ def build_imitation_env(motion_files, num_parallel_envs, mode,
       # reads motor angles from robot minutaur class: GetMotorAngles(). Applies STD for noise. History of last 3 angles thus 3*8 = 24
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.MotorAngleSensor(num_motors=robot.NUM_MOTORS), num_history=3),
       # [Roll, Pitch, Roll Rate, Pitch Rate] * 3 = 12
-      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.IMUSensor(), num_history=3),
+      sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=robot_sensors.IMUSensor(), num_history=6), #NEW num_history was 3
       # Position of the motors with a bitterworth filter applied. [8]*3 = 24
       sensor_wrappers.HistoricSensorWrapper(wrapped_sensor=environment_sensors.LastActionSensor(num_actions=robot.NUM_MOTORS), num_history=3)
   ]

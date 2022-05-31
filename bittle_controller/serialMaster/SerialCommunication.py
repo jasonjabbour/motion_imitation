@@ -128,6 +128,10 @@ class Communication(object):
         return self.main_engine.readline()
 
 
+    def Read_All(self):
+        return self.main_engine.read_all()
+
+
     def Send_data(self, data):
         """
         send data

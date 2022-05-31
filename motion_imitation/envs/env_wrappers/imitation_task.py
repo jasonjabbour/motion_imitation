@@ -52,11 +52,12 @@ class ImitationTask(object):
                ref_state_init_prob=1.0,
                enable_rand_init_time=True,
                warmup_time=0.0,
-               pose_weight=0.5,
+               pose_weight=0.6, #was .5
                velocity_weight=0.05,
-               end_effector_weight=0.2,
+               end_effector_weight=0.1, #was .2
                root_pose_weight=0.15,
-               root_velocity_weight=0.1,
+               root_velocity_weight=0.05, #was .1
+               orien_deviation_weight = .05, #was .1
                pose_err_scale=5.0,
                velocity_err_scale=0.1,
                end_effector_err_scale=40,
@@ -158,6 +159,8 @@ class ImitationTask(object):
     self._end_effector_weight = end_effector_weight
     self._root_pose_weight = root_pose_weight
     self._root_velocity_weight = root_velocity_weight
+    # NEW for adding YAW to reward function
+    self.orien_deviation_weight = orien_deviation_weight
 
     self._pose_err_scale = pose_err_scale
     self._velocity_err_scale = velocity_err_scale
@@ -355,14 +358,32 @@ class ImitationTask(object):
     end_effector_reward = self._calc_reward_end_effector()
     root_pose_reward = self._calc_reward_root_pose()
     root_velocity_reward = self._calc_reward_root_velocity()
+    #NEW
+    orien_deviation_reward = self._calc_reward_orien_deviation()
 
     reward = self._pose_weight * pose_reward \
              + self._velocity_weight * velocity_reward \
              + self._end_effector_weight * end_effector_reward \
              + self._root_pose_weight * root_pose_reward \
-             + self._root_velocity_weight * root_velocity_reward
+             + self._root_velocity_weight * root_velocity_reward \
+             + self.orien_deviation_weight * orien_deviation_reward #NEW
 
     return reward * self._weight
+  
+  #NEW for adding orientation reward
+  def _calc_reward_orien_deviation(self):
+    """Get the penalty for how much robot deviates from center using yaw
+        This function uses -1.5 to calibrate robot. (robot must head in this direction)"""
+    
+    env = self._env
+    robot = env.robot
+    pyb = self._get_pybullet_client()
+
+    orientation = pyb.getEulerFromQuaternion(self._get_sim_base_rotation())
+    yaw = orientation[2]
+
+    #Correct yaw: -1.5
+    return -abs(1.5+(yaw))
 
   def _calc_reward_pose(self):
     """Get the pose reward."""

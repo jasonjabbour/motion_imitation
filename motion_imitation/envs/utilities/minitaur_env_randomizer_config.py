@@ -28,8 +28,8 @@ def all_params():
       "motor strength": [0.8, 1.2],
       # The following ranges are the physical values, in SI unit.
       "motor friction": [0, 0.05],  # Viscous damping (Nm s/rad).
-      "latency": [0.0, 0.04],  # Time inteval (s).
-      "lateral friction": [0.5, 1.25],  # Friction coefficient (dimensionless).
+      "latency": [0.0, 0.1], #[0.0, 0.04],  # Time inteval (s). NEW
+      "lateral friction": [0.05, .75],  #[0.5, 1.25],  # Friction coefficient (dimensionless). NEW
       "battery": [14.0, 16.8],  # Voltage (V).
       "joint friction": [0, 0.05],  # Coulomb friction torque (Nm).
   }

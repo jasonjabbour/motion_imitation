@@ -50,19 +50,21 @@ def wrapper(task):  # task Structure is [token, var=[], time]
 def serialWriteNumToByte(token, var=None):  # Only to be used for c m u b i l o within Python
     # print("Num Token "); print(token);print(" var ");print(var);print("\n\n");
     logger.debug(f'serialWriteNumToByte, token={token}, var={var}')
-
-    in_str = ""
-    if var is None:
-        var = []
-    if token == 'l' or token == 'i':
-        var = list(map(int, var))
-        in_str = token.encode() + struct.pack('b' * len(var), *var) + '~'.encode()
-    elif token == 'c' or token == 'm' or token == 'M' or token == 'u' or token == 'b':
-        in_str = token + " "
-        for element in var:
-            in_str = in_str + str(element) + " "
-    logger.debug(f"!!!! {in_str}")
-    ser.Send_data(encode(in_str))
+    try:
+        in_str = ""
+        if var is None:
+            var = []
+        if token == 'l' or token == 'i':
+            var = list(map(int, var))
+            in_str = token.encode() + struct.pack('b' * len(var), *var) + '~'.encode()
+        elif token == 'c' or token == 'm' or token == 'M' or token == 'u' or token == 'b':
+            in_str = token + " "
+            for element in var:
+                in_str = in_str + str(element) + " "
+        logger.debug(f"!!!! {in_str}")
+        ser.Send_data(encode(in_str))
+    except Exception as e:
+        print('Error in ardSerial.py serialWriteNumToByte() Token:',token,'Var:',var,'Error:',e)
 
 
 def serialWriteByte(var=None):
@@ -126,7 +128,7 @@ def flushSeialOutput(counterLimit=300):
 
 Communication.Print_Used_Com()
 port = port_list_number
-port = ['COM5']
+port = ['COM10']
 total = len(port)
 index = 0
 for index in range(total):

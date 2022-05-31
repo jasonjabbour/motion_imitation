@@ -46,6 +46,8 @@ class ObservationDictionaryToArrayWrapper(gym.Env):
     observation = self._gym_env.reset(
         initial_motor_angles=initial_motor_angles,
         reset_duration=reset_duration)
+    #NEW
+    del observation['HistoricSensorWrapper(MotorAngle)']
     return self._flatten_observation(observation)
 
   def step(self, action):
@@ -59,6 +61,8 @@ class ObservationDictionaryToArrayWrapper(gym.Env):
         end indicator.
     """
     observation_dict, reward, done, _ = self._gym_env.step(action)
+    #NEW
+    del observation_dict['HistoricSensorWrapper(MotorAngle)']
     return self._flatten_observation(observation_dict), reward, done, _
 
   def render(self, mode='human'):

@@ -46,6 +46,8 @@ python run_tflite_raw.py --mode time
 --------------------------
 --- Reduced Obs Space ---
 -------------------------
+ --- NOTE Now 60 is 66 to include yaw and yaw rate for straight orientation --- 
+
 Bittle Train with only 60 Dim OBS Space on parallel cores:
 mpiexec -n 8 python motion_imitation/run.py --mode train --motion_file motion_imitation/data/motions/pace_bittle.txt --int_save_freq 5000000 --robot bittle --total_timesteps 40000000 --obs_cut_future_frames
 
@@ -58,15 +60,27 @@ python motion_imitation/run.py --mode convert --motion_file motion_imitation/dat
 PB -> Freeze PB -> TFLite
 python motion_imitation/run_tflite.py --mode full_pipeline --model_number 7
 
+Quantize TFLite
+python motion_imitation/run_tflite.py --mode quantize --model_number 7
+
 Test TFLite Model:
-python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --model_number 7
 
 Verify TFLite Model 
-python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --verify
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --verify --model_number 7
 
----- run_tflite_raw.py ----
+Verfiy (or Test) TFLite Quantized Model
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --verify --model_number 7 --quantized_model
+
+Calibraet Sim and Real Bittle
+python motion_imitation/run_tflite.py --mode calibrate --visualize
+
+Test on Real Bittle:
+python motion_imitation/run_tflite.py --mode test_tflite --obs_cut_future_frames --model_number 7 --real_bittle
+
+---- run_tflite_raw.py (rlenv) ----
 Deploy model on bittle:
-python run_tflite_raw.py --mode deploy --tflite_model output/bittle_frozen_model7
+python run_tflite_raw.py --mode deploy --model_number 13
 
 -----------------
 
